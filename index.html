@@ -1,126 +1,93 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tim Konten AI - TikTok Creator Assistant</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root { --accent: #06b6d4; }
-    body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; }
-    .tab-btn.active { background-color: var(--accent); color: #0f172a; font-weight: 600; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tim Konten AI</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+  <div class="app">
+    <!-- Header Top Bar -->
+    <div class="top">
+      <div>
+        <h1>Tim Konten AI</h1>
+        <div class="sub">4 agen untuk kreator TikTok</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" id="summaryBtn" style="display:none;border-color:var(--accent);color:var(--accent)">📋 Rangkuman Talent</button>
+        <button class="btn" id="cfgBtn">⚙️ API Key</button>
+        <button class="btn" id="clear">Hapus Chat</button>
+      </div>
+    </div>
 
-  <header class="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-10 flex justify-between items-center">
-    <h1 class="text-xl font-bold text-cyan-400">⚡ Tim Konten AI TikTok</h1>
-  </header>
-
-  <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
-    <!-- Brief Kreator -->
-    <details id="brief" class="bg-slate-800/60 p-4 rounded-xl border border-slate-700" open>
-      <summary class="font-semibold cursor-pointer text-cyan-300">Brief Kreator (dipakai semua agen)</summary>
-      <div class="grid gap-3 mt-3">
-        <div style="display:flex;gap:6px">
-          <input id="b-user" placeholder="Username TikTok (mis. @kreatortiktok)" style="flex:1" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
-          <button class="btn px-4 py-2 rounded text-sm font-medium" id="analyzeUserBtn" style="white-space:nowrap;background:var(--accent);color:#0f172a;border:none">🔍 Analisis Profil</button>
+    <!-- Panel Brief Kreator -->
+    <details id="brief">
+      <summary>Brief kreator & Riset Profil TikTok</summary>
+      <div class="grid">
+        <div style="display:flex;gap:6px;grid-column: span 2">
+          <input id="b-user" placeholder="Username TikTok, misal: @kreatortiktok" style="flex:1">
+          <button class="btn" id="analyzeUserBtn" style="white-space:nowrap;border-color:var(--accent)">🔍 Analisis Profil TikTok</button>
         </div>
-        <input id="b-niche" placeholder="Niche / topik konten, mis. tips keuangan anak muda" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
-        <input id="b-aud" placeholder="Target audiens, mis. mahasiswa 18-24 tahun" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
-        <input id="b-style" placeholder="Gaya & bahasa, mis. santai, humor, bahasa Indonesia gaul" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
-        <input id="b-goal" placeholder="Target, mis. 100 ribu followers dalam 3 bulan" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
+        <input id="b-niche" placeholder="Niche / topik konten, mis. tips keuangan anak muda">
+        <input id="b-aud" placeholder="Target audiens, mis. mahasiswa 18-24 tahun">
+        <input id="b-style" placeholder="Gaya & bahasa, mis. santai, humor, bahasa Indonesia gaul">
+        <input id="b-goal" placeholder="Target, mis. 100 ribu followers dalam 3 bulan">
       </div>
     </details>
 
-    <!-- Navigation Tabs -->
-    <div id="tabs" class="flex gap-2 overflow-x-auto pb-2"></div>
+    <!-- Tab Navigasi Agen & Workflows -->
+    <div class="tabs" id="tabs"></div>
 
-    <!-- Chat Area -->
-    <div class="flex-1 bg-slate-800/40 border border-slate-700 rounded-xl p-4 flex flex-col h-[400px] overflow-y-auto" id="chat-container">
-      <div id="chat-logs" class="space-y-4 flex-1"></div>
+    <!-- Area Obrolan Chat -->
+    <div class="chat" id="chat"></div>
+
+    <!-- Bar Alat Teruskan -->
+    <div class="tools" id="tools">
+      Teruskan jawaban terakhir ke:
+      <select id="fwd"></select>
+      <button class="btn" id="fwdBtn">Teruskan</button>
     </div>
 
-    <!-- Input Box -->
-    <div class="flex gap-2">
-      <input id="inp" placeholder="Ketik perintah atau pilih contoh di atas..." class="flex-1 bg-slate-900 border border-slate-700 p-3 rounded-xl text-white text-sm">
-      <button id="sendBtn" class="bg-cyan-500 text-slate-950 font-bold px-6 py-3 rounded-xl hover:bg-cyan-400 transition">Kirim</button>
+    <!-- Input Bar Utama -->
+    <div class="bar">
+      <textarea id="inp" rows="1" placeholder="Tulis pesan untuk agen..."></textarea>
+      <button class="send" id="send">Kirim</button>
     </div>
-  </main>
+  </div>
 
-  <script>
-    const $ = id => document.getElementById(id);
-    const BASE = "Instruksi dasar asisten TikTok. ";
-    
-    const AGENTS = [
-      {id:"manager", name:"Content Manager", sub:"Strategi & kalender", sys:BASE+"Peranmu: Content Manager. Susun strategi konten, pilar konten, kalender posting.", chips:["Buat kalender konten 7 hari","Tentukan 4 pilar konten"]},
-      {id:"script", name:"Script Writer", sub:"Hook & naskah video", sys:BASE+"Peranmu: Script Writer. Tulis naskah video TikTok pendek.", chips:["Tulis 5 hook yang kuat","Naskah 30 detik"]},
-      {id:"social", name:"Social Media", sub:"Caption & hashtag", sys:BASE+"Peranmu: Social Media Specialist. Buat caption & hashtag.", chips:["Caption + hashtag terbaik"]},
-      {id:"data", name:"Data Analyst", sub:"Analisis profil", sys:BASE+"Peranmu: Data Analyst. Analisis metrik & profil TikTok.", chips:["Analisis profil TikTok saya"]}
-    ];
+  <!-- Modal API Key -->
+  <div class="modal-overlay" id="apiModal" style="display:none">
+    <div class="modal">
+      <h2>⚙️ Pengaturan API Key Gemini</h2>
+      <p style="font-size:13px;color:var(--mute);margin:0">Aplikasi ini berjalan mandiri di web browser Anda. Masukkan API Key Gemini untuk mengaktifkan seluruh agen AI secara gratis.</p>
+      <input type="password" id="apiKeyInput" placeholder="Masukkan Gemini API Key (AIzaSy...)">
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn" id="closeModalBtn">Batal</button>
+        <button class="btn" id="saveKeyBtn" style="background:var(--accent);color:#fff;border:0">Simpan API Key</button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--mute)">
+        Belum punya API key? <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">Dapatkan gratis dari Google AI Studio ↗</a>
+      </div>
+    </div>
+  </div>
 
-    let cur = "manager", hist = {}, brief = {};
-    try {
-      hist = JSON.parse(localStorage.getItem("tka-hist") || "{}");
-      brief = JSON.parse(localStorage.getItem("tka-brief") || "{}");
-    } catch (e) {}
+  <!-- Modal Rangkuman Talent -->
+  <div class="modal-overlay" id="summaryModal" style="display:none">
+    <div class="modal large">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="margin:0">📋 Rangkuman Eksekusi Talent (Per Konten)</h2>
+        <button class="btn" id="closeSummaryBtn">Tutup</button>
+      </div>
+      <p style="font-size:13px;color:var(--mute);margin:0 0 12px">Rangkuman terstruktur dari hasil alur kerja tim agen AI untuk langsung dibaca atau dieksekusi oleh talent/videografer.</p>
+      <div class="modal-body" id="summaryContent">
+        <!-- Hasil rangkuman akan disuntikkan lewat JS -->
+      </div>
+    </div>
+  </div>
 
-    AGENTS.forEach(a => { if (!Array.isArray(hist[a.id])) hist[a.id] = []; });
-    
-    const save = () => {
-      try {
-        localStorage.setItem("tka-hist", JSON.stringify(hist));
-        localStorage.setItem("tka-brief", JSON.stringify(brief));
-      } catch (e) {}
-    };
-
-    ["user","niche","aud","style","goal"].forEach(k => {
-      const el = $("b-" + k); 
-      if(el){ 
-        el.value = brief[k] || "";
-        el.addEventListener("input", () => { brief[k] = el.value; save(); }); 
-      }
-    });
-
-    function briefText() {
-      const p = [
-        ["Username TikTok", brief.user], 
-        ["Niche", brief.niche], 
-        ["Audiens", brief.aud], 
-        ["Gaya", brief.style], 
-        ["Target", brief.goal]
-      ].filter(x => x[1]);
-      
-      return p.length ? "Brief kreator: " + p.map(x => x[0] + ": " + x[1]).join("; ") + ". " : "";
-    }
-
-    function renderTabs() {
-      $("tabs").innerHTML = AGENTS.map(a => `
-        <button class="tab-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm whitespace-nowrap border border-slate-700 ${cur === a.id ? 'active' : ''}" onclick="switchTab('${a.id}')">
-          ${a.name} <span class="text-xs opacity-60 block">${a.sub}</span>
-        </button>
-      `).join("");
-      renderChat();
-    }
-
-    window.switchTab = id => { cur = id; renderTabs(); };
-
-    function renderChat() {
-      const logs = hist[cur] || [];
-      $("chat-logs").innerHTML = logs.length === p => p ? '' : `<p class="text-slate-500 text-center italic mt-10">Belum ada percakapan dengan agen ini. Pilih chip di bawah atau ketik pesan.</p>` 
-        : logs.map(m => `<div class="p-3 rounded-lg ${m.role === 'user' ? 'bg-slate-700 ml-8' : 'bg-slate-800 border border-slate-700 mr-8'} text-sm">${m.text}</div>`).join("");
-    }
-
-    $("analyzeUserBtn").onclick = () => {
-      const user = $("b-user").value.trim();
-      if (!user) { alert("Masukkan username TikTok terlebih dahulu!"); return; }
-      brief.user = user; save();
-      cur = "data";
-      renderTabs();
-      $("inp").value = "Tolong analisis profil TikTok " + user;
-    };
-
-    renderTabs();
-  </script>
+  <!-- Script Modules -->
+  <script src="agent.js"></script>
+  <script src="applogics.js"></script>
 </body>
 </html>
