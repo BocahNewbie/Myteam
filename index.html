@@ -1,64 +1,126 @@
-<!-- ... existing code ... -->
-  <details id="brief">
-    <summary>Brief kreator (dipakai semua agen)</summary>
-    <div class="grid">
-      <div style="display:flex;gap:6px">
-        <input id="b-user" placeholder="Username TikTok (mis. @kreatortiktok)" style="flex:1">
-        <button class="btn" id="analyzeUserBtn" style="white-space:nowrap;background:var(--accent);color:#fff;border:none">🔍 Analisis Profil TikTok</button>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tim Konten AI - TikTok Creator Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --accent: #06b6d4; }
+    body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; }
+    .tab-btn.active { background-color: var(--accent); color: #0f172a; font-weight: 600; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <header class="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-10 flex justify-between items-center">
+    <h1 class="text-xl font-bold text-cyan-400">⚡ Tim Konten AI TikTok</h1>
+  </header>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
+    <!-- Brief Kreator -->
+    <details id="brief" class="bg-slate-800/60 p-4 rounded-xl border border-slate-700" open>
+      <summary class="font-semibold cursor-pointer text-cyan-300">Brief Kreator (dipakai semua agen)</summary>
+      <div class="grid gap-3 mt-3">
+        <div style="display:flex;gap:6px">
+          <input id="b-user" placeholder="Username TikTok (mis. @kreatortiktok)" style="flex:1" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
+          <button class="btn px-4 py-2 rounded text-sm font-medium" id="analyzeUserBtn" style="white-space:nowrap;background:var(--accent);color:#0f172a;border:none">🔍 Analisis Profil</button>
+        </div>
+        <input id="b-niche" placeholder="Niche / topik konten, mis. tips keuangan anak muda" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
+        <input id="b-aud" placeholder="Target audiens, mis. mahasiswa 18-24 tahun" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
+        <input id="b-style" placeholder="Gaya & bahasa, mis. santai, humor, bahasa Indonesia gaul" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
+        <input id="b-goal" placeholder="Target, mis. 100 ribu followers dalam 3 bulan" class="bg-slate-900 border border-slate-700 p-2 rounded text-sm text-white">
       </div>
-      <input id="b-niche" placeholder="Niche / topik konten, mis. tips keuangan anak muda">
-      <input id="b-aud" placeholder="Target audiens, mis. mahasiswa 18-24 tahun">
-      <input id="b-style" placeholder="Gaya & bahasa, mis. santai, humor, bahasa Indonesia gaul">
-      <input id="b-goal" placeholder="Target, mis. 100 ribu followers dalam 3 bulan">
+    </details>
+
+    <!-- Navigation Tabs -->
+    <div id="tabs" class="flex gap-2 overflow-x-auto pb-2"></div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 bg-slate-800/40 border border-slate-700 rounded-xl p-4 flex flex-col h-[400px] overflow-y-auto" id="chat-container">
+      <div id="chat-logs" class="space-y-4 flex-1"></div>
     </div>
-  </details>
-<!-- ... existing code ... -->
-const AGENTS = [
- {id:"manager",name:"Content Manager",sub:"Strategi & kalender",
-  sys:BASE+"Peranmu: Content Manager. Susun strategi konten, pilar konten, kalender posting mingguan/bulanan, prioritas, dan pembagian tugas ke tim. Beri rencana yang realistis untuk kreator solo dengan tim kecil. Jika username TikTok diberikan, sesuaikan strategi dengan karakteristik akun tersebut.",
-  chips:["Buat kalender konten 7 hari","Tentukan 4 pilar konten","Ide seri konten 30 hari"]},
- {id:"script",name:"Script Writer",sub:"Hook & naskah video",
-  sys:BASE+"Peranmu: Script Writer. Tulis naskah video TikTok pendek (15-60 detik) dengan struktur: Hook 3 detik pertama, isi, dan CTA. Sertakan arahan visual singkat per bagian dan beri 3 pilihan hook. Sesuaikan dengan gaya kreator.",
-  chips:["Tulis 5 hook yang kuat","Naskah 30 detik tentang topik saya","Ubah naskah ini jadi lebih singkat"]},
- {id:"social",name:"Social Media Specialist",sub:"Caption, hashtag, engagement",
-  sys:BASE+"Peranmu: Social Media Specialist. Buat caption, hashtag, teks di layar, jadwal posting, balasan komentar, ide duet/stitch, dan taktik engagement untuk TikTok. Hindari taktik yang melanggar aturan platform.",
-  chips:["Caption + hashtag untuk video ini","Balasan komentar yang ramah","Kapan waktu posting terbaik?"]},
- {id:"data",name:"Data Analyst",sub:"Analisis performa & profil",
-  sys:BASE+"Peranmu: Data Analyst. Analisis metrik TikTok atau profil TikTok via username yang diberikan (menganalisis niche, performa konten, positioning, serta rekomendasi konten yang paling cocok). Temukan pola, jelaskan penyebab yang mungkin, dan beri 3 rekomendasi tindakan berurutan prioritas.",
-  chips:["Analisis profil TikTok saya","Analisis data video saya","Rancang eksperimen A/B hook"]}
-];
-<!-- ... existing code ... -->
-let cur = "auto", busy = false, stopFlag = false;
-let hist = {}, brief = {}, wf = {goal: "", log: [], pending: null};
-try { hist = JSON.parse(localStorage.getItem("tka-hist") || "{}"); brief = JSON.parse(localStorage.getItem("tka-brief") || "{}"); wf = JSON.parse(localStorage.getItem("tka-wf") || "null") || wf; } catch (e) {}
-AGENTS.forEach(a => { if (!Array.isArray(hist[a.id])) hist[a.id] = []; });
-const save = () => { try { localStorage.setItem("tka-hist", JSON.stringify(hist)); localStorage.setItem("tka-brief", JSON.stringify(brief)); localStorage.setItem("tka-wf", JSON.stringify(wf)); } catch (e) {} };
-const agent = () => AGENTS.find(a => a.id === cur);
 
-["user","niche","aud","style","goal"].forEach(k => {
-  const el = $("b-" + k); if(el){ el.value = brief[k] || "";
-  el.addEventListener("input", () => { brief[k] = el.value; save(); }); }
-});
+    <!-- Input Box -->
+    <div class="flex gap-2">
+      <input id="inp" placeholder="Ketik perintah atau pilih contoh di atas..." class="flex-1 bg-slate-900 border border-slate-700 p-3 rounded-xl text-white text-sm">
+      <button id="sendBtn" class="bg-cyan-500 text-slate-950 font-bold px-6 py-3 rounded-xl hover:bg-cyan-400 transition">Kirim</button>
+    </div>
+  </main>
 
-$("analyzeUserBtn").onclick = async () => {
-  const user = $("b-user").value.trim();
-  if (!user) {
-    alert("Silakan masukkan username TikTok terlebih dahulu (mis. @kreator)");
-    return;
-  }
-  brief.user = user;
-  save();
-  cur = "data";
-  renderTabs();
-  renderChat();
-  $("inp").value = "Tolong analisis profil TikTok " + user + ". Bedah niche, positioning, gaya konten saat ini, dan rekomendasikan 5 ide konten baru yang sangat cocok dan berpotensi FYP untuk akun ini.";
-  send();
-};
+  <script>
+    const $ = id => document.getElementById(id);
+    const BASE = "Instruksi dasar asisten TikTok. ";
+    
+    const AGENTS = [
+      {id:"manager", name:"Content Manager", sub:"Strategi & kalender", sys:BASE+"Peranmu: Content Manager. Susun strategi konten, pilar konten, kalender posting.", chips:["Buat kalender konten 7 hari","Tentukan 4 pilar konten"]},
+      {id:"script", name:"Script Writer", sub:"Hook & naskah video", sys:BASE+"Peranmu: Script Writer. Tulis naskah video TikTok pendek.", chips:["Tulis 5 hook yang kuat","Naskah 30 detik"]},
+      {id:"social", name:"Social Media", sub:"Caption & hashtag", sys:BASE+"Peranmu: Social Media Specialist. Buat caption & hashtag.", chips:["Caption + hashtag terbaik"]},
+      {id:"data", name:"Data Analyst", sub:"Analisis profil", sys:BASE+"Peranmu: Data Analyst. Analisis metrik & profil TikTok.", chips:["Analisis profil TikTok saya"]}
+    ];
 
-function renderTabs() {
-<!-- ... existing code ... -->
-function briefText() {
-  const p = [["Username TikTok", brief.user], ["Niche", brief.niche], ["Audiens", brief.aud], ["Gaya", brief.style], ["Target", brief.goal]].filter(x => x[1]);
-  return p.length ? "Brief kreator: " + p.map(x => x[0] + ": " + x[1]).join("; ") + ". " : "";
-}
-<!-- ... existing code ... -->
+    let cur = "manager", hist = {}, brief = {};
+    try {
+      hist = JSON.parse(localStorage.getItem("tka-hist") || "{}");
+      brief = JSON.parse(localStorage.getItem("tka-brief") || "{}");
+    } catch (e) {}
+
+    AGENTS.forEach(a => { if (!Array.isArray(hist[a.id])) hist[a.id] = []; });
+    
+    const save = () => {
+      try {
+        localStorage.setItem("tka-hist", JSON.stringify(hist));
+        localStorage.setItem("tka-brief", JSON.stringify(brief));
+      } catch (e) {}
+    };
+
+    ["user","niche","aud","style","goal"].forEach(k => {
+      const el = $("b-" + k); 
+      if(el){ 
+        el.value = brief[k] || "";
+        el.addEventListener("input", () => { brief[k] = el.value; save(); }); 
+      }
+    });
+
+    function briefText() {
+      const p = [
+        ["Username TikTok", brief.user], 
+        ["Niche", brief.niche], 
+        ["Audiens", brief.aud], 
+        ["Gaya", brief.style], 
+        ["Target", brief.goal]
+      ].filter(x => x[1]);
+      
+      return p.length ? "Brief kreator: " + p.map(x => x[0] + ": " + x[1]).join("; ") + ". " : "";
+    }
+
+    function renderTabs() {
+      $("tabs").innerHTML = AGENTS.map(a => `
+        <button class="tab-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm whitespace-nowrap border border-slate-700 ${cur === a.id ? 'active' : ''}" onclick="switchTab('${a.id}')">
+          ${a.name} <span class="text-xs opacity-60 block">${a.sub}</span>
+        </button>
+      `).join("");
+      renderChat();
+    }
+
+    window.switchTab = id => { cur = id; renderTabs(); };
+
+    function renderChat() {
+      const logs = hist[cur] || [];
+      $("chat-logs").innerHTML = logs.length === p => p ? '' : `<p class="text-slate-500 text-center italic mt-10">Belum ada percakapan dengan agen ini. Pilih chip di bawah atau ketik pesan.</p>` 
+        : logs.map(m => `<div class="p-3 rounded-lg ${m.role === 'user' ? 'bg-slate-700 ml-8' : 'bg-slate-800 border border-slate-700 mr-8'} text-sm">${m.text}</div>`).join("");
+    }
+
+    $("analyzeUserBtn").onclick = () => {
+      const user = $("b-user").value.trim();
+      if (!user) { alert("Masukkan username TikTok terlebih dahulu!"); return; }
+      brief.user = user; save();
+      cur = "data";
+      renderTabs();
+      $("inp").value = "Tolong analisis profil TikTok " + user;
+    };
+
+    renderTabs();
+  </script>
+</body>
+</html>
