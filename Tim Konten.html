@@ -1,0 +1,64 @@
+<!-- ... existing code ... -->
+  <details id="brief">
+    <summary>Brief kreator (dipakai semua agen)</summary>
+    <div class="grid">
+      <div style="display:flex;gap:6px">
+        <input id="b-user" placeholder="Username TikTok (mis. @kreatortiktok)" style="flex:1">
+        <button class="btn" id="analyzeUserBtn" style="white-space:nowrap;background:var(--accent);color:#fff;border:none">🔍 Analisis Profil TikTok</button>
+      </div>
+      <input id="b-niche" placeholder="Niche / topik konten, mis. tips keuangan anak muda">
+      <input id="b-aud" placeholder="Target audiens, mis. mahasiswa 18-24 tahun">
+      <input id="b-style" placeholder="Gaya & bahasa, mis. santai, humor, bahasa Indonesia gaul">
+      <input id="b-goal" placeholder="Target, mis. 100 ribu followers dalam 3 bulan">
+    </div>
+  </details>
+<!-- ... existing code ... -->
+const AGENTS = [
+ {id:"manager",name:"Content Manager",sub:"Strategi & kalender",
+  sys:BASE+"Peranmu: Content Manager. Susun strategi konten, pilar konten, kalender posting mingguan/bulanan, prioritas, dan pembagian tugas ke tim. Beri rencana yang realistis untuk kreator solo dengan tim kecil. Jika username TikTok diberikan, sesuaikan strategi dengan karakteristik akun tersebut.",
+  chips:["Buat kalender konten 7 hari","Tentukan 4 pilar konten","Ide seri konten 30 hari"]},
+ {id:"script",name:"Script Writer",sub:"Hook & naskah video",
+  sys:BASE+"Peranmu: Script Writer. Tulis naskah video TikTok pendek (15-60 detik) dengan struktur: Hook 3 detik pertama, isi, dan CTA. Sertakan arahan visual singkat per bagian dan beri 3 pilihan hook. Sesuaikan dengan gaya kreator.",
+  chips:["Tulis 5 hook yang kuat","Naskah 30 detik tentang topik saya","Ubah naskah ini jadi lebih singkat"]},
+ {id:"social",name:"Social Media Specialist",sub:"Caption, hashtag, engagement",
+  sys:BASE+"Peranmu: Social Media Specialist. Buat caption, hashtag, teks di layar, jadwal posting, balasan komentar, ide duet/stitch, dan taktik engagement untuk TikTok. Hindari taktik yang melanggar aturan platform.",
+  chips:["Caption + hashtag untuk video ini","Balasan komentar yang ramah","Kapan waktu posting terbaik?"]},
+ {id:"data",name:"Data Analyst",sub:"Analisis performa & profil",
+  sys:BASE+"Peranmu: Data Analyst. Analisis metrik TikTok atau profil TikTok via username yang diberikan (menganalisis niche, performa konten, positioning, serta rekomendasi konten yang paling cocok). Temukan pola, jelaskan penyebab yang mungkin, dan beri 3 rekomendasi tindakan berurutan prioritas.",
+  chips:["Analisis profil TikTok saya","Analisis data video saya","Rancang eksperimen A/B hook"]}
+];
+<!-- ... existing code ... -->
+let cur = "auto", busy = false, stopFlag = false;
+let hist = {}, brief = {}, wf = {goal: "", log: [], pending: null};
+try { hist = JSON.parse(localStorage.getItem("tka-hist") || "{}"); brief = JSON.parse(localStorage.getItem("tka-brief") || "{}"); wf = JSON.parse(localStorage.getItem("tka-wf") || "null") || wf; } catch (e) {}
+AGENTS.forEach(a => { if (!Array.isArray(hist[a.id])) hist[a.id] = []; });
+const save = () => { try { localStorage.setItem("tka-hist", JSON.stringify(hist)); localStorage.setItem("tka-brief", JSON.stringify(brief)); localStorage.setItem("tka-wf", JSON.stringify(wf)); } catch (e) {} };
+const agent = () => AGENTS.find(a => a.id === cur);
+
+["user","niche","aud","style","goal"].forEach(k => {
+  const el = $("b-" + k); if(el){ el.value = brief[k] || "";
+  el.addEventListener("input", () => { brief[k] = el.value; save(); }); }
+});
+
+$("analyzeUserBtn").onclick = async () => {
+  const user = $("b-user").value.trim();
+  if (!user) {
+    alert("Silakan masukkan username TikTok terlebih dahulu (mis. @kreator)");
+    return;
+  }
+  brief.user = user;
+  save();
+  cur = "data";
+  renderTabs();
+  renderChat();
+  $("inp").value = "Tolong analisis profil TikTok " + user + ". Bedah niche, positioning, gaya konten saat ini, dan rekomendasikan 5 ide konten baru yang sangat cocok dan berpotensi FYP untuk akun ini.";
+  send();
+};
+
+function renderTabs() {
+<!-- ... existing code ... -->
+function briefText() {
+  const p = [["Username TikTok", brief.user], ["Niche", brief.niche], ["Audiens", brief.aud], ["Gaya", brief.style], ["Target", brief.goal]].filter(x => x[1]);
+  return p.length ? "Brief kreator: " + p.map(x => x[0] + ": " + x[1]).join("; ") + ". " : "";
+}
+<!-- ... existing code ... -->
